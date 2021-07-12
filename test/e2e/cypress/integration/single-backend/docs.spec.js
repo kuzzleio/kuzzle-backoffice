@@ -99,7 +99,6 @@ describe('Document List', function() {
     cy.get('[data-cy=Treeview-item--anothercollection]').click()
     cy.get(`[data-cy=Treeview-item--${collectionName}]`).click()
 
-
     cy.url().should('contain', 'listViewType=column')
     cy.get('[data-cy="DocumentList-Column"]')
 
@@ -242,7 +241,7 @@ describe('Document List', function() {
     cy.get('.col > .TimeSeriesValueSelector > .row > .col > .far').click()
   })
 
-  it('Should handle the map view properly', function() {
+  it('Should handle the map view properly for markers', function() {
     cy.request('PUT', `${kuzzleUrl}/${indexName}/mapcollectiontest`, {
       properties: {
         location: {
@@ -314,6 +313,154 @@ describe('Document List', function() {
       2
     )
     cy.get('.leaflet-marker-pane .mapView-marker-selected').should('exist')
+  })
+
+  it('Should handle the map view properly for shapes', function() {
+    cy.request('PUT', `${kuzzleUrl}/${indexName}/mapcollectiontest`, {
+      properties: {
+        location: {
+          type: 'geo_point'
+        },
+        shapeLocation: {
+          type: 'geo_shape',
+          strategy: 'recursive'
+        }
+      }
+    })
+    cy.request(
+      'POST',
+      `${kuzzleUrl}/${indexName}/mapcollectiontest/mapViewTestDoc1/_create?refresh=wait_for`,
+      {
+        location: {
+          lat: 43.64326358211144,
+          lon: 3.831031442987847
+        }
+      }
+    )
+    cy.request(
+      'POST',
+      `${kuzzleUrl}/${indexName}/mapcollectiontest/mapViewTestDoc2/_create?refresh=wait_for`,
+      {
+        location: {
+          lat: 43.664501944601604,
+          lon: 3.871200201519735
+        }
+      }
+    )
+    cy.request(
+      'POST',
+      `${kuzzleUrl}/${indexName}/mapcollectiontest/mapViewTestDoc3/_create?refresh=wait_for`,
+      {
+        location: {
+          lat: 43.67120723541598,
+          lon: 3.9499927663322842
+        }
+      }
+    )
+
+    cy.request(
+      'POST',
+      `${kuzzleUrl}/${indexName}/mapcollectiontest/mapViewTestDoc4/_create?refresh=wait_for`,
+      {
+        shapeLocation: {
+          type: 'circle',
+          coordinates: [43.730096133858524, 3.915556507504015],
+          radius: '1000m'
+        }
+      }
+    )
+
+    cy.request(
+      'POST',
+      `${kuzzleUrl}/${indexName}/mapcollectiontest/mapViewTestDoc5/_create?refresh=wait_for`,
+      {
+        shapeLocation: {
+          type: 'polygon',
+          coordinates: [
+            [
+              [43.60032923480691, 3.8878084393198136],
+              [43.60356125105433, 3.9083219719888764],
+              [43.59091188995088, 3.9090086174338654],
+              [43.59144029485811, 3.8783241491108957],
+              [43.60032923480691, 3.8878084393198136]
+            ]
+          ]
+        }
+      }
+    )
+
+    cy.request(
+      'POST',
+      `${kuzzleUrl}/${indexName}/mapcollectiontest/mapViewTestDoc6/_create?refresh=wait_for`,
+      {
+        shapeLocation: {
+          type: 'multipolygon',
+          coordinates: [
+            [
+              [
+                [43.66015088601359, 3.839142054763717],
+                [43.65959203746721, 3.8704273378510523],
+                [43.64465643574373, 3.8730880889503876],
+                [43.64596073192335, 3.8281128123035724],
+                [43.66015088601359, 3.839142054763717]
+              ]
+            ],
+            [
+              [
+                [43.71901833733811, 3.92913852182612],
+                [43.715266485411206, 3.985942880878295],
+                [43.69020926282012, 3.9893217296479504],
+                [43.69517426144837, 3.9269220225309236],
+                [43.71901833733811, 3.92913852182612]
+              ],
+              [
+                [43.70829406483838, 3.9422358371159754],
+                [43.70656068186119, 3.965451798017157],
+                [43.69706558137606, 3.966759739476379],
+                [43.70080864286678, 3.943652773696799],
+                [43.70829406483838, 3.9422358371159754]
+              ]
+            ]
+          ]
+        }
+      }
+    )
+
+    cy.waitOverlay()
+
+    cy.visit(`/#/data/${indexName}/mapcollectiontest`)
+    cy.wait(500)
+    cy.contains('mapcollectiontest')
+
+    cy.get('[data-cy="CollectionDropdownView"').click()
+    cy.wait(500)
+    cy.get('[data-cy="CollectionDropdown-map"]').click()
+    cy.url().should('contain', 'listViewType=map')
+
+    cy.get('[data-cy="mapView-map"').should('exist')
+
+    // markers well displayed
+    cy.get('.leaflet-marker-pane .mapView-marker-default').should(
+      'have.length',
+      3
+    )
+
+    // shapes well displayed
+    cy.get('.data-cy-shape').should('have.length', 4)
+    cy.get('.data-cy-shape-selected').should('not.exist')
+
+    // document card ok
+    cy.get('[data-cy="mapView-no-document-card"').should('exist')
+    cy.get('[data-cy="mapView-current-document-card"').should('not.exist')
+
+    cy.get('.data-cy-shape-mapViewTestDoc4').click({
+      force: true
+    })
+
+    cy.get('[data-cy="mapView-no-document-card"').should('not.exist')
+    cy.get('[data-cy="mapView-current-document-card"').should('exist')
+    cy.get('[data-cy="mapView-current-document-id"').contains('mapViewTestDoc4')
+    cy.get('.data-cy-shape-selected').should('exist')
   })
 })
 

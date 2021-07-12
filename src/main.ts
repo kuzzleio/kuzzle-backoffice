@@ -7,6 +7,7 @@ import VueFormGenerator from 'vue-form-generator'
 import 'vue-form-generator/dist/vfg.css'
 import JsonFormInput from '@/components/Data/Documents/FormInputs/JsonFormInput.vue'
 import DateTimeFormInput from '@/components/Data/Documents/FormInputs/DateTimeFormInput.vue'
+import 'leaflet/dist/leaflet.css'
 
 import App from './App.vue'
 import store from './vuex/store'

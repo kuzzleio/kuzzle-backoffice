@@ -84,8 +84,8 @@ export default {
     },
     mappingHasGeoField() {
       return (
-        Object.keys(this.mappingAttributes).filter(
-          a => this.mappingAttributes[a].type === 'geo_point'
+        Object.keys(this.mappingAttributes).filter(a =>
+          ['geo_point', 'geo_shape'].includes(this.mappingAttributes[a].type)
         ).length > 0
       )
     }
