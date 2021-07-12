@@ -1,0 +1,6 @@
+[
+  {
+    "query": { "controller": "index", "action": "create", "index": "indexName" },
+    "name": "queryName"
+  }
+]

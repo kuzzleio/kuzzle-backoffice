@@ -3,9 +3,10 @@
     id="modal-save-query"
     title="Choose a name for this query"
     @ok="handleOk"
+    @keydown.native.enter="handleOk"
     ok-title-html='<span data-cy="api-actions-modal-ok-button">OK</span>'
   >
-    <form ref="form" @submit.stop.prevent="handleSubmit">
+    <form ref="form" @submit.stop.prevent="handleOk">
       <b-form-group
         label="Name"
         label-for="name-input"

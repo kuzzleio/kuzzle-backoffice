@@ -12,14 +12,33 @@
         :currentQueryName="currentQueryName"
         @deleteSavedQuery="deleteSavedQuery"
         @loadSavedQuery="loadSavedQuery"
-      />
+      >
+        <template #actions>
+          <b-button
+            class="mb-2 mt-2"
+            block
+            variant="outline-primary"
+            v-b-modal.export-actions
+            data-cy="button-export-api-actions"
+            >Export API Actions</b-button
+          >
+          <b-button
+            class="mb-4"
+            block
+            variant="outline-primary"
+            v-b-modal.import-actions
+            data-cy="button-import-api-actions"
+            >Import API Actions</b-button
+          >
+        </template>
+      </QueryList>
     </div>
     <MultipaneResizer data-cy="sidebarResizer" />
     <div class="DataLayout-contentWrapper-vertical">
       <b-container fluid class="h-100">
-        <b-row align-v="stretch" class="h-100">
+        <b-row class="h-100">
           <b-col cols="12" v-if="loading"> </b-col>
-          <b-col cols="12" v-else>
+          <b-col cols="12" class="h-100" v-else>
             <b-card no-body class="px-0 h-100">
               <b-tabs card content-class="px-0 mt-3 tabsHeight">
                 <b-tab
@@ -40,7 +59,7 @@
                     >
                       <b-col
                         cols="9"
-                        class=" text-left py-3 pointer"
+                        class="text-left py-3 pointer"
                         @click="setCurrentTab(tabIdx)"
                       >
                         <span>
@@ -68,13 +87,26 @@
                   />
                 </b-tab>
                 <template #tabs-end>
-                  <b-row
-                    align-v="center"
-                    class="px-3"
+                  <b
                     @click.prevent="addNewTab"
+                    class="px-3 my-3 text-center pointer"
+                    data-cy="api-actions-tab-plus"
+                    >+</b
                   >
-                    <b-col cols="12" class="text-center my-3 pointer">
-                      <b data-cy="api-actions-tab-plus">+</b>
+                </template>
+                <template #empty>
+                  <b-row align-v="center" align-h="center" class="h-100">
+                    <b-col cols="4">
+                      <b-card title="No API action opened.">
+                        <b-card-text>
+                          <p>
+                            You can open a saved action in the left menu or
+                            <b-button variant="primary" @click="addNewTab"
+                              >create one</b-button
+                            >
+                          </p>
+                        </b-card-text>
+                      </b-card>
                     </b-col>
                   </b-row>
                 </template>
@@ -88,6 +120,11 @@
       :isQueryNameValid="isQueryNameValid"
       @storeNewQuery="storeNewQuery"
     />
+    <ExportActionsModal :tabs="tabs" />
+    <ImportActionsModal
+      :savedActionNames="savedActionNames"
+      @import-actions="importActions"
+    />
   </Multipane>
 </template>
 
@@ -95,6 +132,8 @@
 import SaveQueryModal from '@/components/ApiAction/SaveQueryModal'
 import QueryList from '@/components/ApiAction/QueryList'
 import QueryCard from '@/components/ApiAction/QueryCard'
+import ExportActionsModal from '@/components/ApiAction/ExportActionsModal'
+import ImportActionsModal from '@/components/ApiAction/ImportActionsModal'
 
 import { Multipane, MultipaneResizer } from 'vue-multipane'
 import { mapGetters } from 'vuex'
@@ -107,7 +146,9 @@ export default {
     MultipaneResizer,
     QueryCard,
     SaveQueryModal,
-    QueryList
+    QueryList,
+    ExportActionsModal,
+    ImportActionsModal
   },
   data() {
     return {
@@ -124,6 +165,9 @@ export default {
   computed: {
     ...mapGetters('kuzzle', ['$kuzzle', 'currentEnvironment']),
     ...mapGetters('auth', ['canGetPublicApi', 'canGetOpenApi']),
+    savedActionNames() {
+      return this.savedQueries.map(q => q.name)
+    },
     emptyTab() {
       return {
         query: {
@@ -151,6 +195,16 @@ export default {
     }
   },
   methods: {
+    importActions(actions) {
+      for (const action of actions) {
+        action.idx = this.savedQueries.length
+        action.savedIdx = this.savedQueries.length
+        action.response = ''
+        action.saved = true
+        this.savedQueries.push(JSON.parse(JSON.stringify(action)))
+      }
+      this.storeQueriesToLocalStorage()
+    },
     closeAlert() {
       this.showAlert = false
     },

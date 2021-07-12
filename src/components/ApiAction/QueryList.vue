@@ -4,11 +4,8 @@
       <b-card class="h-100 backgroundCard" no-body>
         <b-card-body class="d-flex flex-column text-center m-0 p-0 h-100">
           <b-card-text class="px-1 py-3 h-100">
-            <b-row
-              align-v="center"
-              class="h-100"
-              v-if="!paginatedQueries.length"
-            >
+            <slot name="actions" />
+            <b-row class="h-100" v-if="!paginatedQueries.length">
               <b-col>
                 <b-card title="No API actions saved.">
                   <b-card-text>
@@ -18,33 +15,35 @@
               </b-col>
             </b-row>
             <template v-else>
-              <b-list-group class="leftNav-container" ref="leftNav-container">
-                <b-list-group-item
-                  v-for="query of paginatedQueries"
-                  class="px-3 py-0"
-                  :key="`saved-query-${query.idx}`"
-                  :active="query.idx === currentQueryIndex"
-                  :ref="`saved-query-${query.idx}`"
-                  :data-cy="`api-actions-saved-query-${query.name}`"
-                >
-                  <b-row align-v="center">
-                    <b-col
-                      cols="9"
-                      class="text-left py-3 pointer leftTab"
-                      @click="loadSavedQuery(query.idx)"
-                      :id="`query-list-${query.idx}`"
-                    >
-                      <span>{{ query.name }}</span>
-                    </b-col>
-                    <b-col cols="3" class="py-3">
-                      <i
-                        class="fas fa-trash pointer"
-                        @click="deleteSavedQuery(query)"
-                      />
-                    </b-col>
-                  </b-row>
-                </b-list-group-item>
-              </b-list-group>
+              <b-card no-body header="Saved API Actions">
+                <b-list-group class="leftNav-container" ref="leftNav-container">
+                  <b-list-group-item
+                    v-for="query of paginatedQueries"
+                    class="px-3 py-0"
+                    :key="`saved-query-${query.idx}`"
+                    :active="query.idx === currentQueryIndex"
+                    :ref="`saved-query-${query.idx}`"
+                    :data-cy="`api-actions-saved-query-${query.name}`"
+                  >
+                    <b-row align-v="center">
+                      <b-col
+                        cols="9"
+                        class="text-left py-3 pointer leftTab"
+                        @click="loadSavedQuery(query.idx)"
+                        :id="`query-list-${query.idx}`"
+                      >
+                        <span>{{ query.name }}</span>
+                      </b-col>
+                      <b-col cols="3" class="py-3">
+                        <i
+                          class="fas fa-trash pointer"
+                          @click="deleteSavedQuery(query)"
+                        />
+                      </b-col>
+                    </b-row>
+                  </b-list-group-item>
+                </b-list-group>
+              </b-card>
             </template>
           </b-card-text>
         </b-card-body>
