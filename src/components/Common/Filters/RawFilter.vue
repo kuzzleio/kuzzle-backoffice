@@ -69,7 +69,10 @@ export default {
   },
   data() {
     return {
-      rawFilter: '{}',
+      rawFilter: `{
+  "query": {},
+  "sort": {}
+}`,
       showError: false
     }
   },

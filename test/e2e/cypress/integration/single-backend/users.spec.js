@@ -104,7 +104,7 @@ describe('Users', function() {
     cy.get('#rawsearch .ace_line').should('exist')
     cy.wait(1000)
 
-    cy.get('#rawsearch .ace_line').click({ force: true })
+    cy.get('#rawsearch .ace_active-line').click({ force: true })
     cy.get('textarea.ace_text-input')
       .should('exist')
       .type('{selectall}{backspace}', { delay: 200, force: true })
