@@ -164,9 +164,11 @@
       @create-successful="onCreateModalSuccess"
     />
     <DeleteIndexModal
+      ref="deleteIndexModal"
       :index="indexToDelete"
       :modalId="deleteIndexModalId"
-      @delete-successful="onDeleteModalSuccess"
+      @confirm-deletion="onConfirmDeleteModal"
+      @cancel="onCancelDeleteModal"
     />
     <BulkDeleteIndexesModal
       :indexes="selectedIndexes"
@@ -261,6 +263,20 @@ export default {
     },
     openBulkDeleteModal() {
       this.$bvModal.show(this.bulkDeleteIndexesModalId)
+    },
+    async onCancelDeleteModal() {
+      this.$refs.deleteIndexModal.resetForm()
+      this.$bvModal.hide(this.deleteIndexModalId)
+      await this.refreshIndexes()
+    },
+    async onConfirmDeleteModal() {
+      try {
+        await this.$store.direct.dispatch.index.deleteIndex(this.indexToDelete)
+        this.$bvModal.hide(this.deleteIndexModalId)
+        await this.refreshIndexes()
+      } catch (err) {
+        this.$refs.deleteIndexModal.setError(err.message)
+      }
     },
     async onDeleteModalSuccess() {
       await this.refreshIndexes()

@@ -1,14 +1,8 @@
 <template>
-  <b-modal
-    class="DeleteIndexModal"
-    size="lg"
-    :id="modalId"
-    :ref="modalId"
-    @hide="resetForm"
-  >
+  <b-modal class="DeleteIndexModal" size="lg" :id="modalId" @hide="resetForm">
     <template v-slot:modal-title>
       Index
-      <strong>{{ truncateName(index.name) }}</strong> deletion
+      <strong>{{ truncateName(index ? index.name : '') }}</strong> deletion
     </template>
 
     <template v-slot:modal-footer>
@@ -31,6 +25,7 @@
         description="This operation is NOT reversible"
       >
         <b-form-input
+          autofocus
           data-cy="DeleteIndexModal-name"
           id="inputConfirmation"
           v-model="confirmation"
@@ -66,7 +61,7 @@ export default {
   },
   computed: {
     isConfirmationValid() {
-      return this.confirmation === this.index.name
+      return this.index && this.confirmation === this.index.name
     }
   },
   methods: {
@@ -75,14 +70,11 @@ export default {
       this.confirmation = ''
       this.error = ''
     },
-    onDeleteSuccess() {
-      this.resetForm()
-      this.$bvModal.hide(this.modalId)
-      this.$emit('delete-successful')
+    setError(error) {
+      this.error = error
     },
     onCancel() {
       this.resetForm()
-      this.$bvModal.hide(this.modalId)
       this.$emit('cancel')
     },
 
@@ -90,13 +82,7 @@ export default {
       if (!this.isConfirmationValid) {
         return
       }
-
-      try {
-        await this.$store.direct.dispatch.index.deleteIndex(this.index)
-        this.onDeleteSuccess()
-      } catch (err) {
-        this.error = err.message
-      }
+      this.$emit('confirm-deletion')
     }
   }
 }

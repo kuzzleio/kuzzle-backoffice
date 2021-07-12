@@ -49,7 +49,7 @@
 import { truncateName } from '@/utils'
 
 export default {
-  name: 'deleteIndexModal',
+  name: 'deleteCollectionModal',
   props: {
     modalId: {
       type: String,
