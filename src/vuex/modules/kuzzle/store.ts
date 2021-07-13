@@ -134,7 +134,7 @@ const actions = createActions({
       (payload.environment.host !== getters.currentEnvironment.host ||
         payload.environment.port !== getters.currentEnvironment.port ||
         payload.environment.ssl !== getters.currentEnvironment.ssl ||
-        payload.backendMajorVersion !==
+        payload.environment.backendMajorVersion !==
           getters.currentEnvironment.backendMajorVersion)
     ) {
       mustReconnect = true
@@ -202,8 +202,12 @@ const actions = createActions({
 
     loadedEnv = JSON.parse(localStorage.getItem(LS_ENVIRONMENTS) || '{}')
     Object.keys(loadedEnv).forEach(envName => {
+      const env = loadedEnv[envName]
+      if (env.hideAdminBanner === undefined) {
+        env.hideAdminBanner = ['localhost', '127.0.0.1'].includes(env.host)
+      }
       commit.createEnvironment({
-        environment: loadedEnv[envName],
+        environment: env,
         id: envName
       })
     })
