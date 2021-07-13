@@ -1,7 +1,7 @@
 <template>
   <b-form-input
     :ref="refName"
-    v-model="value"
+    v-model="innerValue"
     v-bind="$attrs"
     data-auto-focus-input="true"
   />
@@ -30,11 +30,14 @@ export default {
     initialValue: {
       type: String,
       default: ''
+    },
+    value: {
+      type: String
     }
   },
   data() {
     return {
-      value: this.initialValue
+      innerValue: this.initialValue
     }
   },
   computed: {
@@ -83,8 +86,8 @@ export default {
         // to have double input on Chrome doesn't work well because then the cursor
         // is at the wrong place
         setTimeout(() => {
-          if (this.value === '') {
-            this.value = keyEvent.key
+          if (this.innerValue === '') {
+            this.innerValue = keyEvent.key
           }
         }, 1)
       }
@@ -109,8 +112,13 @@ export default {
     this.listenKeypress()
   },
   watch: {
-    value() {
-      this.$emit('input', this.value)
+    value(newValue) {
+      if (newValue !== this.innerValue) {
+        this.innerValue = newValue
+      }
+    },
+    innerValue() {
+      this.$emit('input', this.innerValue)
     }
   },
   beforeDestroy() {

@@ -104,6 +104,7 @@ export default {
     AutoFocusInput
   },
   props: {
+    currentFilter: Object,
     advancedFiltersVisible: Boolean,
     advancedQueryLabel: {
       type: String,
@@ -161,6 +162,14 @@ export default {
       if (this.submitOnType) {
         this.submitSearch()
       }
+    },
+    'currentFilter.quick': {
+      handler(newValue) {
+        if (newValue !== this.value) {
+          this.value = newValue
+        }
+      },
+      deep: true
     }
   }
 }

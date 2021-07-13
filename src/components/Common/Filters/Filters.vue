@@ -23,6 +23,7 @@
           :initialValue="quickFilter"
           :placeholder="quickFilterPlaceholder"
           :submit-on-type="quickFilterSubmitOnType"
+          :current-filter="currentFilter"
           @display-advanced-filters="
             advancedFiltersVisible = !advancedFiltersVisible
           "
