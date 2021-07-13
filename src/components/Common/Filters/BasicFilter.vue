@@ -263,10 +263,13 @@ export default {
   computed: {
     ...mapGetters('kuzzle', ['wrapper']),
     selectAttributesValues() {
-      return Object.keys(this.mappingAttributes).map(a => ({
-        text: a,
-        value: a
-      }))
+      return [
+        { text: '_id', value: '_id' },
+        ...Object.keys(this.mappingAttributes).map(a => ({
+          text: a,
+          value: a
+        }))
+      ]
     },
     sortAttributesValues() {
       return Object.keys(this.mappingAttributes)

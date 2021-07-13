@@ -261,91 +261,73 @@ export class KuzzleWrapperV1 {
           return
         }
 
-        // TODO Convert this into a big switch/case
-        if (filter.operator === 'contains') {
-          if (mappingAttrs[filter.attribute].type === 'text') {
-            formattedFilter.bool.must.push({
-              match_phrase_prefix: { [filter.attribute]: filter.value }
-            })
-          }
-          if (mappingAttrs[filter.attribute].type === 'keyword') {
-            formattedFilter.bool.must.push({
-              regexp: {
-                [filter.attribute]:
-                  '.*' + buildCaseInsensitiveRegexp(filter.value) + '.*'
-              }
-            })
-          }
-        } else if (filter.operator === 'not_contains') {
-          if (mappingAttrs[filter.attribute].type === 'text') {
-            formattedFilter.bool.must_not.push({
-              match_phrase_prefix: { [filter.attribute]: filter.value }
-            })
-          }
-          if (mappingAttrs[filter.attribute].type === 'keyword') {
-            formattedFilter.bool.must_not.push({
-              regexp: {
-                [filter.attribute]:
-                  '.*' + buildCaseInsensitiveRegexp(filter.value) + '.*'
-              }
-            })
-          }
-        } else if (filter.operator === 'equal') {
-          formattedFilter.bool.must.push({
-            range: {
-              [filter.attribute]: {
-                gte: filter.value,
-                lte: filter.value
-              }
-            }
-          })
-        } else if (filter.operator === 'not_equal') {
-          formattedFilter.bool.must_not.push({
-            range: {
-              [filter.attribute]: {
-                gte: filter.value,
-                lte: filter.value
-              }
-            }
-          })
-        } else if (filter.operator === 'range') {
-          const range = { range: {} }
-          if (filter.gt_value && filter.lt_value) {
-            range.range = {
-              [filter.attribute]: {
-                gt: filter.gt_value,
-                lt: filter.lt_value
-              }
-            }
-          } else if (filter.gt_value && !filter.lt_value) {
-            range.range = {
-              [filter.attribute]: {
-                gt: filter.gt_value
-              }
-            }
-          } else {
-            range.range = {
-              [filter.attribute]: {
-                lt: filter.lt_value
-              }
-            }
-          }
-          formattedFilter.bool.must.push(range)
-        } else if (filter.operator === 'exists') {
-          const exists = {
-            exists: {
-              field: filter.attribute
-            }
-          }
-          formattedFilter.bool.must.push(exists)
-        } else if (filter.operator === 'not_exists') {
-          const exists = {
-            exists: {
-              field: filter.attribute
-            }
-          }
-          formattedFilter.bool.must_not.push(exists)
+        const mustOperators = ['contains', 'equal', 'range', 'exists']
+        const mustNotOperators = ['not_contains', 'not_equal', 'not_exists']
+
+        let verb: any = null
+        if (mustOperators.includes(filter.operator)) {
+          verb = 'must'
+        } else if (mustNotOperators.includes(filter.operator)) {
+          verb = 'must_not'
         }
+
+        let filterToAdd: any = null
+        switch (filter.operator) {
+          case 'contains':
+          case 'not_contains':
+            if (filter.attribute === '_id') {
+              filterToAdd = {
+                match: { [filter.attribute]: filter.value }
+              }
+            } else if (mappingAttrs[filter.attribute].type === 'text') {
+              filterToAdd = {
+                match_phrase_prefix: { [filter.attribute]: filter.value }
+              }
+            } else if (mappingAttrs[filter.attribute].type === 'keyword') {
+              filterToAdd = {
+                regexp: {
+                  [filter.attribute]:
+                    '.*' + buildCaseInsensitiveRegexp(filter.value) + '.*'
+                }
+              }
+            }
+            break
+          case 'equal':
+          case 'not_equal':
+            filterToAdd = {
+              range: {
+                [filter.attribute]: {
+                  gte: filter.value,
+                  lte: filter.value
+                }
+              }
+            }
+            break
+          case 'exists':
+          case 'not_exists':
+            filterToAdd = {
+              exists: {
+                field: filter.attribute
+              }
+            }
+            break
+          case 'range':
+            filterToAdd = {
+              range: {
+                [filter.attribute]: {
+                  gt: filter.gt_value ? filter.gt_value : null,
+                  lt: filter.lt_value ? filter.lt_value : null
+                }
+              }
+            }
+            break
+          default:
+            filterToAdd = null
+        }
+        if (!verb || !filterToAdd) {
+          return
+        }
+        formattedFilter.bool[verb].push(filterToAdd)
       })
 
       return formattedFilter
