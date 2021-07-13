@@ -44,6 +44,9 @@
             @delete-collection-clicked="showDeleteCollectionModal"
             @clear="afterCollectionClear"
           />
+          <b-form-checkbox v-model="enableRealtime" switch size="lg">
+            Realtime
+          </b-form-checkbox>
         </b-col>
       </b-row>
 
@@ -251,6 +254,8 @@ export default {
   },
   data() {
     return {
+      subscribeRoomId: null,
+      enableRealtime: false,
       loading: false,
       searchFilterOperands: filterManager.searchFilterOperands,
       selectedDocuments: [],
@@ -272,7 +277,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('kuzzle', ['wrapper']),
+    ...mapGetters('kuzzle', ['wrapper', '$kuzzle']),
     ...mapGetters('auth', [
       'canSearchDocument',
       'canCreateDocument',
@@ -353,6 +358,9 @@ export default {
       return this.collection ? this.collection.isRealtime() : false
     }
   },
+  async beforeDestroy() {
+    await this.unsubscribeToCurrentDocs()
+  },
   async mounted() {
     await this.loadAllTheThings()
 
@@ -361,6 +369,15 @@ export default {
     }
   },
   watch: {
+    enableRealtime: {
+      async handler(value) {
+        if (value) {
+          await this.fetchDocuments()
+        } else {
+          await this.unsubscribeToCurrentDocs()
+        }
+      }
+    },
     currentPage: {
       handler(value) {
         const from = (value - 1) * this.paginationSize
@@ -390,6 +407,44 @@ export default {
     }
   },
   methods: {
+    async unsubscribeToCurrentDocs() {
+      if (this.subscribeRoomId) {
+        await this.$kuzzle.realtime.unsubscribe(this.subscribeRoomId)
+        this.subscribeRoomId = null
+      }
+    },
+    async subscribeToCurrentDocs() {
+      try {
+        await this.unsubscribeToCurrentDocs()
+        const roomId = await this.$kuzzle.realtime.subscribe(
+          this.indexName,
+          this.collectionName,
+          {
+            or: this.documents.map(d => ({ equals: { _id: d._id } }))
+          },
+          this.realtimeNotifCallback
+        )
+        this.subscribeRoomId = roomId
+      } catch (error) {
+        this.$log.error(error)
+      }
+    },
+    realtimeNotifCallback(notif) {
+      if (notif.scope === 'out') {
+        return
+      }
+      if (!['replace', 'update'].includes(notif.action)) {
+        return
+      }
+      const documents = JSON.parse(JSON.stringify(this.documents))
+      const idx = documents.findIndex(d => d._id === notif.result._id)
+      documents[idx] = {
+        ...documents[idx],
+        ...notif.result._source
+      }
+      this.$set(this, 'documents', documents)
+    },
+
     extractAttributesFromMapping,
     truncateName,
     // VIEW MAP - GEOPOINTS
@@ -610,6 +665,9 @@ export default {
         )
         this.documents = res.documents
         this.totalDocuments = res.total
+        if (this.enableRealtime) {
+          await this.subscribeToCurrentDocs()
+        }
       } catch (e) {
         this.$log.error(e)
         if (e.message.includes('failed to create query')) {
@@ -641,7 +699,6 @@ export default {
     // PAGINATION
     // =========================================================================
     changePaginationSize(size) {
-      this.$log.debug(`changing pagination to ${size}`)
       this.onFiltersUpdated(
         Object.assign(this.currentFilter, {
           size,
