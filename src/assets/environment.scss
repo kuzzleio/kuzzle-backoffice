@@ -63,6 +63,6 @@ $colors: (
 
 @each $name, $value in $colors {
   .EnvColor--#{$name} {
-    background-color: $value;
+    background-color: $value !important;
   }
 }

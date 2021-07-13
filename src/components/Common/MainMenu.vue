@@ -45,16 +45,26 @@
         >
           API Action
         </b-nav-item>
-        <b-nav-text
-          class="ml-2"
-          title="Give us your feedback on our GitHub page"
+        <b-dropdown
+          class="mr-2"
+          no-caret
+          :toggle-class="
+            `feedbackDropdown EnvColor--${currentEnvironmentColor}`
+          "
         >
-          <a
-            href="https://github.com/kuzzleio/kuzzle-admin-console"
+          <template v-slot:button-content>
+            <span class="feedbackButtonText">Feedback</span>
+          </template>
+          <b-dropdown-item
+            v-for="feedback of feedbackOptions"
+            :key="`feedback-${feedback.text}`"
+            :href="feedback.url"
             target="_blank"
-            ><i class="logout fab fa-github fa-lg"
-          /></a>
-        </b-nav-text>
+          >
+            <i :class="feedback.icon" class="mr-2 feedbackIcon" />
+            {{ feedback.text }}
+          </b-dropdown-item>
+        </b-dropdown>
       </b-navbar-nav>
       <b-navbar-nav class="ml-auto">
         <b-nav-text
@@ -72,9 +82,9 @@
           @environment::delete="deleteEnvironment"
         />
         <b-nav-item class="ml-1">
-          <a data-cy="MainMenu-logoutBtn" title="Logout" @click="doLogout"
-            ><i class="logout fas fa-power-off"
-          /></a>
+          <a data-cy="MainMenu-logoutBtn" title="Logout" @click="doLogout">
+            <i class="logout fas fa-power-off" />
+          </a>
         </b-nav-item>
       </b-navbar-nav>
     </b-collapse>
@@ -88,6 +98,29 @@ export default {
   name: 'MainMenu',
   components: {
     EnvironmentSwitch
+  },
+  data() {
+    return {
+      feedbackOptions: [
+        {
+          text: 'Talk with our community',
+          url: 'http://join.discord.kuzzle.io/',
+          icon: 'fab fa-discord'
+        },
+        {
+          text: 'Ask a question',
+          url:
+            'https://stackoverflow.com/questions/ask?tags=kuzzle&title=[Admin%20Console]',
+          icon: 'fab fa-stack-overflow'
+        },
+        {
+          text: 'Fill an issue',
+          url:
+            'https://github.com/kuzzleio/kuzzle-admin-console/issues/new/choose',
+          icon: 'fab fa-github'
+        }
+      ]
+    }
   },
   computed: {
     ...mapGetters('auth', ['hasSecurityRights', 'user']),
@@ -145,6 +178,23 @@ export default {
 </script>
 
 <style rel="stylesheet/scss" lang="scss" scoped>
+.feedbackButtonText {
+  opacity: 0.5;
+}
+
+.feedbackIcon {
+  width: 1em;
+}
+
+::v-deep .feedbackDropdown {
+  border: none;
+  box-shadow: none !important;
+}
+
+::v-deep .show .feedbackDropdown i {
+  transform: rotate(90deg);
+}
+
 .logo {
   padding: 0;
 
